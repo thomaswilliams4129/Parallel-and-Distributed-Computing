@@ -134,7 +134,7 @@ int main (int argc, char *argv[])
     initialization(argc, argv, size);
 
     /**Master task only**/
-    masterTask(argc);
+    masterTask(size);
 
     /**Non-master tasks only**/
     nonMasterTask();
