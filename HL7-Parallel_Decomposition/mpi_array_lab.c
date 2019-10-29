@@ -12,8 +12,6 @@ float mysum, sum;
 float update(int myoffset, int chunk, int myid);
 MPI_Status status;
 
-
-
 void initialization(int argc, char **argv, int size) {
 //    printf("%d", argc);
     
@@ -90,51 +88,52 @@ void masterTask(int size) {
 
 void nonMasterTask() {
     if (taskid > MASTER) {
-
+    
     /* Receive my portion of array from the master task */
     source = MASTER;
     MPI_Recv(&offset, 1, MPI_INT, source, tag1, MPI_COMM_WORLD, &status);
     MPI_Recv(&data[offset], chunksize, MPI_FLOAT, source, tag2,
       MPI_COMM_WORLD, &status);
-
+    
     mysum = update(offset, chunksize, taskid);
 
+    
     /* Send my results back to the master task */
     dest = MASTER;
     MPI_Send(&offset, 1, MPI_INT, dest, tag1, MPI_COMM_WORLD);
     MPI_Send(&data[offset], chunksize, MPI_FLOAT, MASTER, tag2, MPI_COMM_WORLD);
 
     MPI_Reduce(&mysum, &sum, 1, MPI_FLOAT, MPI_SUM, MASTER, MPI_COMM_WORLD);
-
+    
     } /* end of non-master */
 }
 
 float update(int myoffset, int chunk, int myid) {
-  int i;
-  float mysum;
-  /* Perform addition to each of my array elements and keep my sum */
-  mysum = 0;
-  for(i=myoffset; i < myoffset + chunk; i++) {
-    data[i] = data[i] + i * 1.0;
-    mysum = mysum + data[i];
+    int i;
+    float mysum;
+    /* Perform addition to each of my array elements and keep my sum */
+    mysum = 0;
+    for(i=myoffset; i < myoffset + chunk; i++) {
+        data[i] = data[i] + i * 1.0;
+        mysum = mysum + data[i];
     }
-  printf("Task %d mysum = %e\n",myid,mysum);
-  return(mysum);
+    printf("Task %d mysum = %e\n",myid,mysum);
+    return(mysum);
 }
 
 
-int main (int argc, char *argv[])
-{
+int main (int argc, char *argv[]) {
+    
     int size = atoi(argv[1]);
     
     // data array size dynamic
     data = (float *) malloc(size * sizeof(float));
-
+    
     /**Initializations**/
     initialization(argc, argv, size);
-
+    
     /**Master task only**/
-    masterTask(argc);
+    masterTask(size);
 
     /**Non-master tasks only**/
     nonMasterTask();
