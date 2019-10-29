@@ -1,11 +1,10 @@
 #include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
-#define  ARRAYSIZE    16000000
+#include <string.h>
 #define  MASTER        0
 
-float  data[ARRAYSIZE];
-
+float *data = {NULL};
 
 int   numtasks, taskid, rc, dest, offset, i, j, tag1,
       tag2, source, chunksize;
@@ -14,7 +13,8 @@ float update(int myoffset, int chunk, int myid);
 MPI_Status status;
 
 
-void initialization(int argc, char **argv) {
+
+void initialization(int argc, char **argv, int size) {
 //    printf("%d", argc);
     
     MPI_Init(&argc, &argv);                     // MPI_Init executes it causes the creation of the number of process
@@ -36,17 +36,17 @@ void initialization(int argc, char **argv) {
     
     printf ("MPI task %d has started...\n", taskid);
     
-    chunksize = (ARRAYSIZE / numtasks);
+    chunksize = (size / numtasks);
     tag2 = 1;
     tag1 = 2;
 }
 
-void masterTask() {
+void masterTask(int size) {
     if (taskid == MASTER){
 
     /* Initialize the array */
     sum = 0;
-    for(i=0; i<ARRAYSIZE; i++) {
+    for(i=0; i<size; i++) {
       data[i] =  i * 1.0;
       sum = sum + data[i];
       }
@@ -125,12 +125,16 @@ float update(int myoffset, int chunk, int myid) {
 
 int main (int argc, char *argv[])
 {
+    int size = atoi(argv[1]);
+    
+    // data array size dynamic
+    data = (float *) malloc(size * sizeof(float));
 
     /**Initializations**/
-    initialization(argc, argv);
+    initialization(argc, argv, size);
 
     /**Master task only**/
-    masterTask();
+    masterTask(argc);
 
     /**Non-master tasks only**/
     nonMasterTask();
